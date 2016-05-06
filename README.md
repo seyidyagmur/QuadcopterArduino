@@ -1,7 +1,7 @@
 # Quadcopter kontrolu için Arduino Kodu
 
 
--- Geliþtiriciler --
+### Geliþtiriciler
 
 - Seyid Yaðmur
 - Mehmet Ali Ýlgar
@@ -9,6 +9,6 @@
 - Mustafa Batmaz
 - Murat Akbulut
 
-Tasarým
+### Tasarým
 
-Mehmet Emin Gürkan
+-Mehmet Emin Gürkan
