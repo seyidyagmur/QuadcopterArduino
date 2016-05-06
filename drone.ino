@@ -35,6 +35,7 @@ void dmpDataReady() {
     mpuInterrupt = true;
 }
 
+
 float roll;
 float pitch;
 float startPitch;
@@ -134,11 +135,12 @@ void setup()
 
 }
 
+String Data = "";
+
 void loop()
 {
 
   // Esperamos ha recibir datos.
-    Serial.println("BT available");
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
 
@@ -190,7 +192,7 @@ void loop()
         Serial.print("\t");
 */
     }
-    
+    /*
   if (BTSerial.available()){
     
     // La funcion read() devuelve un caracter 
@@ -216,6 +218,26 @@ void loop()
     }
       
   }
+*/
+    while (BTSerial.available())
+    {
+        char character = BTSerial.read(); // Receive a single character from the software serial port
+        Data.concat(character); // Add the received character to the receive buffer
+
+        if (character == '\n' && Data.length() > 0)
+        {
+            //Serial.print("Received: ");
+            //Serial.println(Data);
+            if(Data.charAt(0) == 'p') {
+              Serial.print("TelefonPitch:");
+              Serial.println(Data.substring(1, Data.length()).toFloat());
+            }
+            // Add your code to parse the received line here....
+
+            // Clear receive buffer so we're ready to receive the next line
+            Data = "";
+        }
+    }
 
     float rollSpeed = (roll - startRoll) * ROLL_CARPANI;
     float pitchSpeed = (pitch - startPitch) * PITCH_CARPANI;
@@ -231,22 +253,27 @@ void loop()
   
     } 
   
-    // SOL ON//on
-/*    esc9.writeMicroseconds(guc -pitchSpeed);
-    // SOL ARKA//sol
-    esc10.writeMicroseconds(guc -rollSpeed);
-    */
-    // SAG ON//SAG
-   esc12.writeMicroseconds(guc  + rollSpeed);
-    // SAG
-   esc11.writeMicroseconds((guc + pitchSpeed)); 
+    // Sol
+    esc9.writeMicroseconds(guc + rollSpeed);
+    // ON
+    esc10.writeMicroseconds(guc - pitchSpeed);
+    
+    // ARKA
+    esc12.writeMicroseconds(guc  + pitchSpeed);
+    // Sag
+    esc11.writeMicroseconds(guc - rollSpeed); 
 
-    Serial.print("guc: ");
-    Serial.print(guc);
-    Serial.print("   pitch: ");
-    Serial.print(pitchSpeed);
-    Serial.print("   roll: ");
-    Serial.print(rollSpeed);
+/*
+    Serial.print("sag: ");
+    Serial.print(guc - rollSpeed);
+    Serial.print("   sol: ");
+    Serial.print(guc + rollSpeed);
+    Serial.print("   on: ");
+    Serial.print(guc - pitchSpeed);
+    Serial.print("   arka: ");
+    Serial.println(guc + pitchSpeed);
+*/
+
 
      /*
     //İleri
