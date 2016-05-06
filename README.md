@@ -11,4 +11,4 @@
 
 ### Tasarım
 
--Mehmet Emin Gürkan
+- Mehmet Emin Gürkan
