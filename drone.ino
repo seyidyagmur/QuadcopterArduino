@@ -6,14 +6,15 @@
   #include "Wire.h"
 #endif
 
-#define GUC_BASLANGIC 1200
+#define GUC_BASLANGIC 1000
 #define ROLL_CARPANI 3
 #define PITCH_CARPANI 3
 #define YPR_LIMIT 300
 #define DELTA_SPEED 50
+#define DELTA_SPEED_YAVAS 15
 
-#define RxD 8
-#define TxD 7
+#define RxD 0
+#define TxD 1
 
 bool blinkState = false;
 
@@ -40,6 +41,8 @@ float roll;
 float pitch;
 float startPitch;
 float startRoll;
+float telPitch;
+float telRoll;
 int guc = 0;
 int gear = 0;
 
@@ -192,7 +195,7 @@ void loop()
         Serial.print("\t");
 */
     }
-    /*
+  /*  
   if (BTSerial.available()){
     
     // La funcion read() devuelve un caracter 
@@ -227,11 +230,52 @@ void loop()
         if (character == '\n' && Data.length() > 0)
         {
             //Serial.print("Received: ");
-            //Serial.println(Data);
+            Serial.println(Data);
             if(Data.charAt(0) == 'p') {
-              Serial.print("TelefonPitch:");
-              Serial.println(Data.substring(1, Data.length()).toFloat());
+              telPitch = Data.substring(1, Data.length()).toFloat()*2;
+            //telPitch=telPitch>30?30:0;
+            //telPitch=telPitch<-30?-30:0;
+            /*
+            if(telPitch > 30)
+              telPitch = 30;
+            else if(telPitch < -30)
+              telPitch = -30;
+            else
+              telPitch = 0;
+              */
+            } else if(Data.charAt(0) == 'r') {
+              telRoll = Data.substring(1, Data.length()).toFloat()*2;
+
+             //telRoll=telRoll>30?30:0;
+            //telRoll=telRoll<-30?-30:0;
+            /*
+            if(telRoll > 30)
+              telRoll = 30;
+            else if(telRoll < -30)
+              telRoll = -30;
+            else
+              telRoll = 0;
+              */
+            } else if(Data.charAt(0)=='i'){
+                if(Data.substring(1, Data.length()).toInt() == 6){
+                  guc = GUC_BASLANGIC;
+                  startRoll = 0;
+                  startPitch = 0;
+                } else if(Data.substring(1, Data.length()).toInt() == 5){
+                  guc = 1000;
+                } else if(Data.substring(1, Data.length()).toInt() == 7){
+                  guc += DELTA_SPEED;
+                } else if(Data.substring(1, Data.length()).toInt() == 8){
+                  guc -= DELTA_SPEED;
+                } else if(Data.substring(1, Data.length()).toInt() == 1){ //azalyavaş
+                  guc -= DELTA_SPEED_YAVAS;
+                } else if(Data.substring(1, Data.length()).toInt() == 2){ 
+                  guc += DELTA_SPEED_YAVAS;
+                }
+
             }
+            
+              
             // Add your code to parse the received line here....
 
             // Clear receive buffer so we're ready to receive the next line
@@ -252,173 +296,43 @@ void loop()
       pitchSpeed = pitchSpeed < -YPR_LIMIT ? -YPR_LIMIT : pitchSpeed;
   
     } 
-  
-    // Sol
-    esc9.writeMicroseconds(guc + rollSpeed);
-    // ON
-    esc10.writeMicroseconds(guc - pitchSpeed);
-    
-    // ARKA
-    esc12.writeMicroseconds(guc  + pitchSpeed);
-    // Sag
-    esc11.writeMicroseconds(guc - rollSpeed); 
+
+    telRoll = 0;
+    telPitch = 0;
+
+    int gucSol = guc;// + rollSpeed - telRoll;
+    int gucSag = guc;// - rollSpeed + telRoll;
+    int gucOn = guc;// - pitchSpeed + telPitch;
+    int gucArka = guc;//  + pitchSpeed - telPitch;
 
 /*
-    Serial.print("sag: ");
-    Serial.print(guc - rollSpeed);
-    Serial.print("   sol: ");
-    Serial.print(guc + rollSpeed);
+    gucSol *= 1;
+    gucSag *= 1.007;
+    gucOn *= 1;
+    gucArka *= 1.003;
+  */
+    // Sol
+    esc9.writeMicroseconds(gucSol);
+    // ON
+    esc10.writeMicroseconds(gucOn);
+    
+    // ARKA
+    esc12.writeMicroseconds(gucArka);
+    // Sag
+    esc11.writeMicroseconds(gucSag); 
+
+
+    //Serial.print("sag: ");
+    Serial.print("   guc: ");
+    Serial.println(guc);
+    /*Serial.print("   sol: ");
+    Serial.print(guc + rollSpeed - telRoll);
     Serial.print("   on: ");
-    Serial.print(guc - pitchSpeed);
+    Serial.print(guc - pitchSpeed + telPitch);
     Serial.print("   arka: ");
-    Serial.println(guc + pitchSpeed);
+    Serial.println(guc + pitchSpeed - telPitch);
 */
 
 
-     /*
-    //İleri
-    if (command == '1'){
-      
-      value=millis();
-      while(millis()<(value+500))
-      { 
-        esc9.writeMicroseconds(a-50);
-        esc10.writeMicroseconds(a+50);
-        esc11.writeMicroseconds(a+50); 
-        esc12.writeMicroseconds(a-50);        
-      }
-      value=millis();
-      while(millis()<(value+500))
-      {
-        esc9.writeMicroseconds(a+50);
-        esc10.writeMicroseconds(a-50);
-        esc11.writeMicroseconds(a-50); 
-        esc12.writeMicroseconds(a+50);        
-      }
-      
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a);
-      esc12.writeMicroseconds(a);
-    }
-    //Geri
-     if (command == '2'){
-      
-      value=millis();
-      while(millis()<(value+500))
-      { 
-        esc9.writeMicroseconds(a+50);
-        esc10.writeMicroseconds(a-50);
-        esc11.writeMicroseconds(a-50); 
-        esc12.writeMicroseconds(a+50);        
-      }
-      value=millis();
-      while(millis()<(value+500))
-      {
-        esc9.writeMicroseconds(a-50);
-        esc10.writeMicroseconds(a+50);
-        esc11.writeMicroseconds(a+50); 
-        esc12.writeMicroseconds(a-50);        
-      }
-      
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a); 
-      esc12.writeMicroseconds(a);
-                   
-    }
-    //Sağ
-     if (command == '3'){
-      value=millis();
-      while(millis()<(value+500))
-      {
-        esc9.writeMicroseconds(a+50);
-        esc10.writeMicroseconds(a+50);
-        esc11.writeMicroseconds(a-50); 
-        esc12.writeMicroseconds(a-50);        
-      }
-      value=millis();
-      while(millis()<(value+500))
-      {
-        esc9.writeMicroseconds(a-50);
-        esc10.writeMicroseconds(a-50);
-        esc11.writeMicroseconds(a+50); 
-        esc12.writeMicroseconds(a+50);        
-      }
-      
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a);
-      esc12.writeMicroseconds(a);
- 
-    }
-    //Sol
-     if (command == '4'){
-      
-      value=millis();
-      while(millis()<(value+500))
-      {
-        esc9.writeMicroseconds(a-50);
-        esc10.writeMicroseconds(a-50);
-        esc11.writeMicroseconds(a+50); 
-        esc12.writeMicroseconds(a+50);        
-      }
-      value=millis();
-      while(millis()<(value+500))
-      {
-        esc9.writeMicroseconds(a+50);
-        esc10.writeMicroseconds(a+50);
-        esc11.writeMicroseconds(a-50); 
-        esc12.writeMicroseconds(a-50);        
-      }
-      
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a);
-      esc12.writeMicroseconds(a);
-  
-    }
-      //Dur
-     if (command == '5'){
-      a=1000;
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a);
-      esc12.writeMicroseconds(a);
-              
- 
-    }
-    //Başla
-     if (command == '6'){
-      a=1300;
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a);
-      esc12.writeMicroseconds(a);
-              
- 
-    }
-    //yüksel
-     if (command == '7'){
- 
-      a+=x;
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a); 
-      esc12.writeMicroseconds(a);
-              
- 
-    }
-    //alçal
-     if (command == '8'){
-          
-      a-=x;
-      esc9.writeMicroseconds(a);
-      esc10.writeMicroseconds(a);
-      esc11.writeMicroseconds(a);
-      esc12.writeMicroseconds(a);
-              
- 
-    }
-    */
+     
 }
